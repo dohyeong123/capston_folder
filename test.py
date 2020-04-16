@@ -272,8 +272,8 @@ class random_pskmod_constel(gr.top_block, Qt.QWidget):
                     ntaps = 8
                     #noise_amp = 0.1
                     self.chan = channels.dynamic_channel_model( 200e3, 0.01, 1e2, 0.01, 1e3, 8, fD, True, 4, delays, mags, ntaps, noise_amp, 0x1337 )
-                    self.snk1 = blocks.file_sink(gr.sizeof_gr_complex*1, '/root/capston_folder/before_channel.dat', False)
-                    self.snk2 = blocks.file_sink(gr.sizeof_gr_complex*1, '/root/capston_folder/after_channel.dat', False)
+                    self.snk1 = blocks.file_sink(gr.sizeof_gr_complex*1, '/root/workspace/capston_folder/before_channel.dat', False)
+                    self.snk2 = blocks.file_sink(gr.sizeof_gr_complex*1, '/root/workspace/capston_folder/after_channel.dat', False)
                     print("running test", i,mod_type)
                     print("mod_type_name : ", mod_type.modname)
                     tx_len = int(10e3)
@@ -365,10 +365,10 @@ def main(top_block_cls=random_pskmod_constel, options=None):
     cat.generate(128)
     cat.draw_graph(0)
     cat.train_test()
-    #cat.cnn_model()
-    #cat.training_session(5,1024)
+    cat.cnn_model()
+    cat.training_session(5,1024)
 
-    cat.load_model('/root/dataset/convmodrecnets_CNN2_0.5.wts.h5')
+    #cat.load_model('/root/convmodrecnets_CNN2_0.5.wts.h5')
     cat.score(1024)
     cat.plot_matrix()
     def quitting():

@@ -5,11 +5,12 @@ import scipy
 
 import os,random
 #os.environ["KERAS_BACKEND"] = "theano"
-#os.environ["KERAS_BACKEND"] = "tensorflow"
+os.environ["KERAS_BACKEND"] = "tensorflow"
 #os.environ["THEANO_FLAGS"]  = "device=gpu%d"%(1)
 import numpy as np
 #import theano as th
 #import theano.tensor as T
+import keras
 from keras.utils import np_utils
 import keras.models as models
 from keras.layers.core import Reshape,Dense,Dropout,Activation,Flatten
@@ -27,11 +28,12 @@ import keras.backend as K
 class Cat():
     def __init__(self):
         print('init')
-        self.f_BPSK = np.fromfile(open("/root/capston_folder/after_channel.dat"), dtype=np.float32)
+        self.f_BPSK = np.fromfile(open("/root/workspace/capston_folder/after_channel.dat"), dtype=np.float32)
+        print('start cat!')
 
     def generate(self, samp_len):
         self.samp_len = samp_len
-        self.f_BPSK = np.fromfile(open("/root/capston_folder/after_channel.dat"), dtype=np.float32)
+        self.f_BPSK = np.fromfile(open("/root/workspace/capston_folder/after_channel.dat"), dtype=np.float32)
 
         print(type(self.f_BPSK))
         print(self.f_BPSK.shape)
@@ -82,23 +84,38 @@ class Cat():
         self.test_idx = list(set(range(0,self.n_examples))-set(self.train_idx))
         self.X_train = self.test_BPSK[self.train_idx]
         self.X_test =  self.test_BPSK[self.test_idx]
+        print(self.X_test)
             
-        def to_onehot(yy):
+        def to_onehot_test(yy):
             yy1 = np.zeros([len(yy), max(yy)+1])
             yy1[np.arange(len(yy)),yy] = 1
             return yy1
-
+        def to_onehot_train(yy, max_value):
+            self.max_value = max_value
+            yy1 = np.zeros([len(yy), self.max_value])
+            yy1[np.arange(len(yy)),yy] = 1
+            return yy1
     
         self.mods = ['bpsk','qpsk','8psk','pam4','qam16','qam64','gfsk','cpfsk']
         self.yn_examples = self.test_BPSK.shape[0]
         self.yn_train = int(self.yn_examples*0.5)
-        self.a = np.random.choice(range(0,8), size=self.yn_train, replace=True)
-        self.b = np.random.choice(range(0,8), size=self.yn_train, replace=True)
+        #self.a = np.random.choice(range(0,8), size=self.yn_train, replace=True)
+        #self.b = np.random.choice(range(0,8), size=self.yn_train, replace=True)
+        self.a = np.ones(self.X_train.shape[0], dtype='int')
+        self.b = np.ones(self.X_train.shape[0], dtype='int')
+        print(self.b)
         self.map_a = map(lambda x:self.mods.index(self.mods[x]), self.a)
         self.map_b = map(lambda x: self.mods.index(self.mods[x]), self.b)
-        
-        self.Y_train = to_onehot(self.map_a)
-        self.Y_test = to_onehot(self.map_b)
+        print(self.a)
+        print(self.map_a)
+        print(self.map_b)
+        self.max_v = max(self.map_a) + 1
+        self.Y_train = to_onehot_train(self.map_a,8)
+        self.Y_test = to_onehot_train(self.map_b,8)
+        print(self.Y_train)
+        print(self.Y_train.shape[1])
+        print(self.Y_test)
+        print('X_test.shape : ', self.X_test.shape)
         print('Y_train.shape : ',self.Y_train.shape)
         print('train_test_complete!!!')
         self.in_shp = list(self.X_train.shape[1:])
@@ -122,8 +139,8 @@ class Cat():
         self.model.add(Flatten())
         self.model.add(Dense(256, activation='relu'))
         self.model.add(Dropout(self.dr))
-        self.model.add(Dense(7, activation='softmax'))
-        self.model.add(Reshape([7]))
+        self.model.add(Dense(8, activation='softmax'))
+        self.model.add(Reshape([8]))
         self.model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
         self.model.summary()
 
@@ -145,7 +162,7 @@ class Cat():
 
     def score(self, batch_size):
         self.batch_size = batch_size
-        self.score = self.pre_model.evaluate(self.X_test, self.Y_test, verbose=1, batch_size = self.batch_size)
+        self.score = self.model.evaluate(self.X_test, self.Y_test, verbose=1, batch_size = self.batch_size)
         print("self.score : ", self.score)
 
     def training_performance(self):
@@ -169,16 +186,16 @@ class Cat():
             plt.imshow(cm, interpolation='nearest', cmap=cmap)
             plt.title(title)
             plt.colorbar()
-            labes_ = ['BPSK']
             tick_marks = np.arange(len(labels))
             plt.xticks(tick_marks, labels, rotation=45)
-            plt.yticks(tick_marks, labes_)
+            plt.yticks(tick_marks, labels)
             plt.tight_layout()
             plt.ylabel('True label')
             plt.xlabel('Predicted label')
             plt.show()
 
-        self.test_Y_hat = self.pre_model.predict(self.X_test, batch_size=1024)
+        self.test_Y_hat = self.model.predict(self.X_test, batch_size=1024)
+        print(self.test_Y_hat)
         self.conf = np.zeros([len(self.mods),len(self.mods)])
         self.confnorm = np.zeros([len(self.mods),len(self.mods)])
         for i in range(0,self.X_test.shape[0]):
