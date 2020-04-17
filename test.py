@@ -39,7 +39,7 @@ from gnuradio import channels, gr, blocks
 import numpy as np
 import numpy.fft, cPickle, gzip
 import math
-import start
+import start2
 class random_pskmod_constel(gr.top_block, Qt.QWidget):
 
     def __init__(self):
@@ -73,14 +73,14 @@ class random_pskmod_constel(gr.top_block, Qt.QWidget):
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = 32000
+        self.samp_rate = samp_rate = 10000
 
         ##################################################
         # Blocks
         ##################################################
         self.qtgui_const_sink_x_0 = qtgui.const_sink_c(
         	1024, #size
-        	"", #name
+        	"pre", #name
         	1 #number of inputs
         )
         self.qtgui_const_sink_x_0.set_update_time(0.10)
@@ -123,7 +123,7 @@ class random_pskmod_constel(gr.top_block, Qt.QWidget):
 
         self.qtgui_const_sink_x_1 = qtgui.const_sink_c(
         	1024, #size
-        	"", #name
+        	"post", #name
         	1 #number of inputs
         )
         self.qtgui_const_sink_x_1.set_update_time(0.10)
@@ -166,7 +166,7 @@ class random_pskmod_constel(gr.top_block, Qt.QWidget):
         self.qtgui_time_sink_x_1 = qtgui.time_sink_c(
         	1024, #size
         	samp_rate, #samp_rate
-        	"", #name
+        	"pre", #name
         	1 #number of inputs
         )
         self.qtgui_time_sink_x_1.set_update_time(0.10)
@@ -219,7 +219,7 @@ class random_pskmod_constel(gr.top_block, Qt.QWidget):
         self.qtgui_time_sink_x_2 = qtgui.time_sink_c(
         	1024, #size
         	samp_rate, #samp_rate
-        	"", #name
+        	"post", #name
         	1 #number of inputs
         )
         self.qtgui_time_sink_x_2.set_update_time(0.10)
@@ -259,80 +259,39 @@ class random_pskmod_constel(gr.top_block, Qt.QWidget):
         apply_channel = True
         output = {}
         min_length = 9e9
-        snr_vals = range(-20,-19,1)
         for alphabet_type in transmitters.keys():
             print(alphabet_type)
-            for i,mod_type in enumerate(transmitters[alphabet_type]):
-                if mod_type.modname == 'BPSK':
-                    
-                    fD = 1
-                    delays = [0]
-                    mags = [1]
-                    noise_amp = 0
-                    ntaps = 8
-                    #noise_amp = 0.1
-                    self.chan = channels.dynamic_channel_model( 200e3, 0.01, 1e2, 0.01, 1e3, 8, fD, True, 4, delays, mags, ntaps, noise_amp, 0x1337 )
-                    self.snk1 = blocks.file_sink(gr.sizeof_gr_complex*1, '/root/workspace/capston_folder/before_channel.dat', False)
-                    self.snk2 = blocks.file_sink(gr.sizeof_gr_complex*1, '/root/workspace/capston_folder/after_channel.dat', False)
-                    print("running test", i,mod_type)
-                    print("mod_type_name : ", mod_type.modname)
-                    tx_len = int(10e3)
-                    self.src1 = source_alphabet(alphabet_type, tx_len, True)
-                    self.mod1 = mod_type()
-                    #self.connect(self.src1, self.mod1, self.chan)
-                    self.connect(self.src1, self.mod1)
-                    #self.connect(self.mod1,self.chan)
-                    # connect blocks
-                    self.connect((self.mod1),(self.chan))
-                    self.connect((self.mod1), (self.qtgui_const_sink_x_0, 0))
-                    self.connect((self.chan), (self.qtgui_const_sink_x_1, 0))
-
-                    self.connect((self.mod1), (self.snk1))
-                    self.connect((self.chan), (self.snk2))
-                    #self.disconnect((self.mod1), (self.qtgui_const_sink_x_0))
-                    #self.connect((self.mod1), (self.chan))
-
-                    self.connect((self.mod1), (self.qtgui_time_sink_x_1, 0))
-                    self.connect((self.chan), (self.qtgui_time_sink_x_2, 0))
-                if mod_type.modname == 'QPSK':
-                    
-                    fD = 1
-                    delays = [0]
-                    mags = [1]
-                    noise_amp = 10**(-12000000000/10.0)
-                    print("noise_amp : ",noise_amp)
-                    ntaps = 8
-                    #noise_amp = 0.1
-                    self.chan = channels.dynamic_channel_model( 200e3, 0.01, 1e2, 0.01, 1e3, 8, fD, True, 4, delays, mags, ntaps, noise_amp, 0x1337 )
-
-
-                    print("running test", i,mod_type)
-                    print("mod_type_name : ", mod_type.modname)
-                    tx_len = int(10e3)
-                    self.src1 = source_alphabet(alphabet_type, tx_len, True)
-                    self.mod1 = mod_type()
-                    #self.connect(self.src1, self.mod1, self.chan)
-                    self.connect(self.src1, self.mod1)
-                    #self.connect(self.mod1,self.chan)
-                    # connect blocks
-                    self.connect((self.mod1),(self.chan))
-                    self.connect((self.chan), (self.qtgui_const_sink_x_1, 0))
-                    #self.disconnect((self.mod1), (self.qtgui_const_sink_x_0))
-                    #self.connect((self.mod1), (self.chan))
-                    self.connect((self.mod1), (self.qtgui_const_sink_x_0, 0))
-                    self.connect((self.mod1), (self.qtgui_time_sink_x_1, 0))
-                    self.connect((self.chan), (self.qtgui_time_sink_x_2, 0))
-
-                else:
-                    pass
-                print("test2")
-
-
-
-
-
-
-
+            for i,mod_type in enumerate(transmitters[alphabet_type]):   
+                print("running test", i, mod_type)
+                
+                tx_len = int(10e3)
+                if mod_type.modname == "QAM64":
+                    tx_len = int(30e3)
+                if mod_type.modname == "QAM16":
+                    tx_len = int(20e3)
+                self.src= source_alphabet(alphabet_type, tx_len, True)
+                self.mod = mod_type()
+                fD = 1
+                delays = [0]
+                mags = [1]
+                #noise_amp = 0
+                ntaps = 8
+                noise_amp = 0.01
+                self.chan = channels.dynamic_channel_model( 200e3, 0.01, 1e2, 0.01, 1e3, 8, fD, True, 4, delays, mags, ntaps, noise_amp, 0x1337 )
+                #self.snk1 = blocks.file_sink(gr.sizeof_gr_complex*1, '/root/workspace/capston_folder/before_channel.dat', False)
+                self.snk2 = blocks.file_sink(gr.sizeof_gr_complex*1, '/root/workspace/capston_folder/after_channel.dat', False)
+                self.snk2.set_unbuffered(False)
+                
+                # connect blocks
+                self.connect(self.src, self.mod)
+                self.connect((self.mod),(self.chan))
+                self.connect((self.mod), (self.qtgui_const_sink_x_0, 0))
+                self.connect((self.mod), (self.qtgui_time_sink_x_1, 0))
+                
+                self.connect((self.chan), (self.qtgui_const_sink_x_1, 0))
+                self.connect((self.chan), (self.snk2))
+                self.connect((self.chan), (self.qtgui_time_sink_x_2, 0))
+                
         ##################################################
         # Connections
         ##################################################
@@ -361,14 +320,14 @@ def main(top_block_cls=random_pskmod_constel, options=None):
     tb = top_block_cls()
     tb.start()
     tb.show()
-    cat = start.Cat()
+    cat = start2.Cat()
     cat.generate(128)
     cat.draw_graph(0)
     cat.train_test()
-    cat.cnn_model()
-    cat.training_session(5,1024)
+    #cat.cnn_model()
+    #cat.training_session(5,1024)
 
-    #cat.load_model('/root/convmodrecnets_CNN2_0.5.wts.h5')
+    cat.load_model('/root/workspace/RF-Signal-Model/weight_4layers.wts.h5')
     cat.score(1024)
     cat.plot_matrix()
     def quitting():

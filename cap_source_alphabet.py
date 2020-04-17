@@ -10,10 +10,10 @@ class source_alphabet(gr.hier_block2):
                 gr.io_signature(0,0,0),
                 gr.io_signature(1,1,gr.sizeof_char))
 
-            self.src = blocks.file_source(gr.sizeof_char, "/root/source_material/gutenberg_shakespeare.txt")
-            self.convert = blocks.packed_to_unpacked_bb(1, gr.GR_LSB_FIRST);
+            self.src = blocks.vector_source_b(map(int, np.random.randint(0, 255, 1000)), True)
+            self.convert = blocks.packed_to_unpacked_bb(1, gr.GR_LSB_FIRST)
             #self.convert = blocks.packed_to_unpacked_bb(8, gr.GR_LSB_FIRST);
-            self.limit = blocks.head(gr.sizeof_char, limit)
+            self.limit = blocks.head(gr.sizeof_char*1, limit)
             self.connect(self.src,self.convert)
             last = self.convert
 
@@ -43,4 +43,5 @@ if __name__ == "__main__":
     src = source_alphabet("discrete", 1000)
     snk = blocks.vector_sink_b()
     tb.run()
+
 
