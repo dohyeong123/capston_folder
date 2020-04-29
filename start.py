@@ -36,12 +36,11 @@ class Cat():
         self.f_BPSK = np.fromfile(open("/root/workspace/capston_folder/after_channel.dat"), dtype=np.float32)
 
         print(type(self.f_BPSK))
-        print(self.f_BPSK.shape)
-
+    
         self.saved_I_data = []
         self.saved_Q_data = []
 
-        for i, v in enumerate(self.f_BPSK[:self.samp_len*500]):    
+        for i, v in enumerate(self.f_BPSK[:self.samp_len*1000]):    
             if i % 2 == 0:
                 self.saved_I_data.append(v)    
             else:
@@ -54,13 +53,14 @@ class Cat():
         self.test_BPSK=np.reshape(self.test_BPSK, (-1,2,self.samp_len))
         self.test_BPSK = np.hstack([self.saved_I_data, self.saved_Q_data])
         self.test_BPSK=np.reshape(self.test_BPSK, (-1,2,self.samp_len))
+        print("test_BPSK.shape : ", self.test_BPSK.shape)
         self.dict_test={}
-        self.dict_test[('BPSK')]=self.test_BPSK;
-
+        self.dict_test[('BPSK')]=self.test_BPSK
+        '''
         #print("dic_test :", self.dict_test)            
         print(len(self.saved_I_data)) # 25000
         print(len(self.saved_Q_data)) # 25000       
-
+        '''
     def draw_graph(self,num):
         for i in range(self.test_BPSK.shape[0]):
             if i >= num:

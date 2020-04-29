@@ -10,7 +10,9 @@ class source_alphabet(gr.hier_block2):
                 gr.io_signature(0,0,0),
                 gr.io_signature(1,1,gr.sizeof_char))
 
+            ##using gnuradio random block
             self.src = blocks.vector_source_b(map(int, np.random.randint(0, 255, 1000)), True)
+            
             self.convert = blocks.packed_to_unpacked_bb(1, gr.GR_LSB_FIRST)
             #self.convert = blocks.packed_to_unpacked_bb(8, gr.GR_LSB_FIRST);
             self.limit = blocks.head(gr.sizeof_char*1, limit)

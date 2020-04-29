@@ -22,8 +22,8 @@ class transmitter_mapper(gr.hier_block2):
             1.0,             # symbol rate
             excess_bw, # excess bandwidth (roll-off factor)
             ntaps)
-        self.rrc_filter = filter.pfb_arb_resampler_ccf(samples_per_symbol, rrc_taps)
-        self.connect(self, self.mod, self.rrc_filter, self)
+        #self.rrc_filter = filter.pfb_arb_resampler_ccf(samples_per_symbol, rrc_taps)
+        self.connect(self, self.mod, self)
         #self.rate = const.bits_per_symbol()
 
 class transmitter_bpsk(transmitter_mapper):
@@ -88,8 +88,6 @@ class transmitter_cpfsk(gr.hier_block2):
         self.mod = analog.cpfsk_bc(0.5, 1.0, sps)
         self.connect( self, self.mod, self )
 
-
 transmitters = {
-    "discrete":[transmitter_qam16],
-    
-    }
+    "discrete":[transmitter_qpsk, transmitter_bpsk]
+}
